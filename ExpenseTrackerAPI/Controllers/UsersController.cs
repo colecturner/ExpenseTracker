@@ -7,6 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ExpenseTrackerAPI.Data;
 using ExpenseTrackerAPI.Models;
+using Microsoft.AspNetCore.Identity;
+using ExpenseTrackerAPI.Helpers;
+using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ExpenseTrackerAPI.Controllers
 {
@@ -15,10 +22,20 @@ namespace ExpenseTrackerAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly IConfiguration _configuration;
 
-        public UsersController(ApplicationDbContext context)
+        public UsersController(
+            ApplicationDbContext context,
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            IConfiguration configuration)
         {
             _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _configuration = configuration;
         }
 
         // GET: api/Users
@@ -120,5 +137,65 @@ namespace ExpenseTrackerAPI.Controllers
         {
             return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> Register(RegisterDTO registerDto)
+        {
+            var userExists = await _context.Users.AnyAsync(x => x.Email == registerDto.Email);
+            if (userExists)
+                return BadRequest("Email is already taken.");
+
+            var user = new User
+            {
+                UserName = registerDto.Username,
+                Email = registerDto.Email,
+            };
+
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok();
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<string>> Login(LoginDTO loginDto)
+        {
+            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            if (user == null)
+                return BadRequest("Invalid email or password.");
+
+            var signInResult = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+            if (!signInResult.Succeeded)
+                return BadRequest("Invalid email or password.");
+
+            var token = GenerateJWTToken(user);
+
+            return Ok(new { Token = token });
+        }
+
+        private string GenerateJWTToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(7),
+                SigningCredentials = creds
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
     }
 }
