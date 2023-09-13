@@ -1,8 +1,63 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<h2>Dashboard</h2>
+
+<!-- Overview of Expenses -->
+<div class="expense-overview">
+    <h3>Monthly Overview</h3>
+    <p id="totalExpenses">Total expenses this month: Loading...</p>
+    <p id="averageExpense">Average daily expense: Loading...</p>
 </div>
+
+<!-- Recent Transactions -->
+<div class="recent-transactions">
+    <h3>Recent Transactions</h3>
+    <ul id="recentTransactionsList">
+        <!-- Placeholder for transactions; data will be dynamically loaded -->
+    </ul>
+</div>
+
+<!-- Expense Visualization -->
+<div class="charts">
+    <h3>Expense Visualization</h3>
+    <canvas id="expenseChart"></canvas>
+</div>
+
+<!-- Include the Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var expenseChart;
+
+    fetch('/api/Expenses')
+        .then(response => response.json())
+        .then(expenses => {
+            const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-indexed
+            const monthlyExpenses = expenses.filter(exp => new Date(exp.date).getMonth() + 1 === currentMonth);
+
+            const totalMonthlyExpense = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            document.getElementById('totalExpenses').textContent = "Total expenses this month: $" + totalMonthlyExpense;
+
+            const daysInMonth = new Date(new Date().getFullYear(), currentMonth, 0).getDate();
+            document.getElementById('averageExpense').textContent = "Average daily expense: $" + (totalMonthlyExpense / daysInMonth).toFixed(2);
+
+            const recentTransactions = expenses.slice(0, 5); // Displaying latest 5 transactions
+            const transactionsList = document.getElementById('recentTransactionsList');
+            transactionsList.innerHTML = ""; // clear placeholder data
+            recentTransactions.forEach(transaction => {
+                var listItem = document.createElement('li');
+                listItem.textContent = `[$${transaction.amount}] - ${transaction.category} - ${new Date(transaction.date).toLocaleDateString()}`;
+                transactionsList.appendChild(listItem);
+            });
+
+            // Initialize the chart (if you wish to do so)
+            // ... your chart initialization code here ...
+
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        });
+</script>

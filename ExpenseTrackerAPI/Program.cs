@@ -37,6 +37,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+
+// Configure CORS if your frontend and backend are separated
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder => builder.WithOrigins("https://localhost:7058")
+    .AllowAnyMethod()
+    .AllowAnyHeader());
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -45,6 +54,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Use CORS
+app.UseCors();
 
 app.UseHttpsRedirection();
 

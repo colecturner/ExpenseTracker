@@ -1,5 +1,53 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+}
+
+<h2>Login</h2>
+
+<form id="loginForm" method="post">
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" class="form-control" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#loginForm").submit(function (event) {
+                event.preventDefault();
+
+                var formData = {
+                    "email": $("#email").val(),
+                    "password": $("#password").val()
+                };
+
+                $.ajax({
+                    url: 'https://localhost:7013/api/Users/login',  // Make sure this URL points to your backend login API.
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        // Handle success - you can store the JWT token or redirect to a dashboard.
+                        // For instance:
+                        // if (response.token) {
+                        //     sessionStorage.setItem('authToken', response.token);
+                        //     window.location.href = '/dashboard';
+                        // }
+                    },
+                    error: function (error) {
+                        // Handle errors - show an error message to the user.
+                        alert("Error: " + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
 }

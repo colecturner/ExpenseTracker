@@ -3,3 +3,61 @@
 *@
 @{
 }
+
+<h2>Register</h2>
+
+<form id="registerForm" method="post">
+    <div class="form-group">
+        <label for="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" class="form-control" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+</form>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Include jQuery if you haven't already -->
+    <script>
+        $(document).ready(function () {
+            $("#registerForm").submit(function (event) {
+                event.preventDefault();
+
+                var formData = {
+                    "FullName": $("#fullName").val(),
+                    "Email": $("#email").val(),
+                    "Username": $("#username").val(),
+                    "Password": $("#password").val()
+                };
+
+                $.ajax({
+                    url: 'https://localhost:7013/api/Users/register',
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        alert("Registered successfully!"); 
+                        window.location.href = "/Account/Login";  
+                    },
+                    error: function (error) {
+                        alert("Registration failed: " + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}
