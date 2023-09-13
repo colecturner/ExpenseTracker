@@ -30,24 +30,27 @@
                 };
 
                 $.ajax({
-                    url: 'https://localhost:7013/api/Users/login',  // Make sure this URL points to your backend login API.
+                    url: 'https://localhost:7013/api/Users/login',
                     type: 'POST',
                     data: JSON.stringify(formData),
                     contentType: 'application/json',
                     success: function (response) {
-                        // Handle success - you can store the JWT token or redirect to a dashboard.
-                        // For instance:
-                        // if (response.token) {
-                        //     sessionStorage.setItem('authToken', response.token);
-                        //     window.location.href = '/dashboard';
-                        // }
+                        if (response.token) {
+                            sessionStorage.setItem('authToken', response.token); 
+
+                            alert('Login successful! Redirecting...');
+
+                            window.location.href = '/';
+                        } else {
+                            alert('Login was successful, but no token was received.');
+                        }
                     },
                     error: function (error) {
-                        // Handle errors - show an error message to the user.
-                        alert("Error: " + error.responseText);
+                        alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.responseText));
                     }
                 });
             });
         });
     </script>
 }
+
