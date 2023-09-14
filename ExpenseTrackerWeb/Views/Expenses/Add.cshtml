@@ -4,34 +4,67 @@
 @{
 }
 
-
 <h2>Add New Expense</h2>
+    <form id="addExpenseForm" method="post">
+        <div class="form-group">
+            <label for="amount">Amount:</label>
+            <input type="number" step="0.01" id="amount" name="amount" class="form-control" required />
+        </div>
 
-<form id="addExpenseForm" method="post">
-    <div class="form-group">
-        <label for="amount">Amount:</label>
-        <input type="number" step="0.01" id="amount" name="amount" class="form-control" required />
-    </div>
+        <div class="form-group">
+            <label for="category">Category:</label>
+            <select id="category" name="category" class="form-control">
+                <option value="1">Food</option>
+                <option value="2">Entertainment</option>
+                <option value="3">Travel</option>
+                <!-- add more if i want -->
+            </select>
+        </div>
 
-    <div class="form-group">
-        <label for="category">Category:</label>
-        <select id="category" name="category" class="form-control">
-            <option value="food">Food</option>
-            <option value="entertainment">Entertainment</option>
-            <option value="travel">Travel</option>
-            <!-- add more if i want -->
-        </select>
-    </div>
+        <div class="form-group">
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" class="form-control" required />
+        </div>
 
-    <div class="form-group">
-        <label for="date">Date:</label>
-        <input type="date" id="date" name="date" class="form-control" required />
-    </div>
+        <div class="form-group">
+            <label for="description">Description (optional):</label>
+            <textarea id="description" name="description" class="form-control"></textarea>
+        </div>
 
-    <div class="form-group">
-        <label for="description">Description (optional):</label>
-        <textarea id="description" name="description" class="form-control"></textarea>
-    </div>
+        <button type="submit" class="btn btn-primary">Add Expense</button>
+    </form>
 
-    <button type="submit" class="btn btn-primary">Add Expense</button>
-</form>
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#addExpenseForm").submit(function (event) {
+                event.preventDefault();
+
+                var formData = {
+                    "Amount": parseFloat($("#amount").val()),
+                    "CategoryId": parseInt($("#category").val(), 10),
+                    "DateIncurred": $("#date").val(),
+                    "Description": $("#description").val()
+                    // TODO: Add the UserId if needed
+                };
+
+                $.ajax({
+                    url: '/api/Expenses',  // Pointing to your ExpensesController's POST endpoint
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        alert("Expense added successfully!");
+                        // TODO: You can redirect to another page or reset the form if you wish
+                        $("#addExpenseForm")[0].reset();
+                    },
+                    error: function (error) {
+                        var errorMessage = error.responseText || "An unknown error occurred.";
+                        alert("Error: " + errorMessage);
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -7,11 +7,11 @@ namespace ExpenseTrackerAPI.Models
     {
         public int ExpenseId { get; set; }
 
-        public int UserId { get; set; }      // FK for User
-        public User? User { get; set; }       // Navigation property
+        public int UserId { get; set; }  
+        public User? User { get; set; }    
 
-        public int CategoryId { get; set; }  // FK for Category
-        public Category? Category { get; set; } // Navigation property
+        public int CategoryId { get; set; }  
+        public Category? Category { get; set; } 
 
         [Column(TypeName = "decimal(10, 2)")]
         public decimal Amount { get; set; }

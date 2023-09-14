@@ -1,63 +1,115 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
 }
 
 <h2>Dashboard</h2>
 
-<!-- Overview of Expenses -->
 <div class="expense-overview">
     <h3>Monthly Overview</h3>
     <p id="totalExpenses">Total expenses this month: Loading...</p>
     <p id="averageExpense">Average daily expense: Loading...</p>
 </div>
 
-<!-- Recent Transactions -->
 <div class="recent-transactions">
     <h3>Recent Transactions</h3>
     <ul id="recentTransactionsList">
-        <!-- Placeholder for transactions; data will be dynamically loaded -->
     </ul>
 </div>
 
-<!-- Expense Visualization -->
 <div class="charts">
     <h3>Expense Visualization</h3>
     <canvas id="expenseChart"></canvas>
 </div>
 
-<!-- Include the Chart.js library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    var expenseChart;
+    const categoryMapping = {
+        1: "Food",
+        2: "Entertainment",
+        3: "Travel"
+    };
 
-    fetch('/api/Expenses')
-        .then(response => response.json())
-        .then(expenses => {
-            const currentMonth = new Date().getMonth() + 1; // JavaScript months are 0-indexed
-            const monthlyExpenses = expenses.filter(exp => new Date(exp.date).getMonth() + 1 === currentMonth);
+    function loadDashboard() {
+        fetch('/api/Expenses')
+            .then(response => response.json())
+            .then(expenses => {
+                console.log("Fetched expenses:", expenses);
+                const currentMonth = new Date().getMonth() + 1;
+                console.log("Current month:", currentMonth);
 
-            const totalMonthlyExpense = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
-            document.getElementById('totalExpenses').textContent = "Total expenses this month: $" + totalMonthlyExpense;
+                const monthlyExpenses = expenses;
 
-            const daysInMonth = new Date(new Date().getFullYear(), currentMonth, 0).getDate();
-            document.getElementById('averageExpense').textContent = "Average daily expense: $" + (totalMonthlyExpense / daysInMonth).toFixed(2);
+                const totalMonthlyExpense = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+                console.log("Total Monthly Expense:", totalMonthlyExpense);
 
-            const recentTransactions = expenses.slice(0, 5); // Displaying latest 5 transactions
-            const transactionsList = document.getElementById('recentTransactionsList');
-            transactionsList.innerHTML = ""; // clear placeholder data
-            recentTransactions.forEach(transaction => {
-                var listItem = document.createElement('li');
-                listItem.textContent = `[$${transaction.amount}] - ${transaction.category} - ${new Date(transaction.date).toLocaleDateString()}`;
-                transactionsList.appendChild(listItem);
+                document.getElementById('totalExpenses').textContent = "Total expenses this month: $" + totalMonthlyExpense.toFixed(2);
+
+                const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
+                document.getElementById('averageExpense').textContent = "Average daily expense: $" + (totalMonthlyExpense / daysInMonth).toFixed(2);
+
+                const recentTransactions = expenses.slice(0, 5);
+                const transactionsList = document.getElementById('recentTransactionsList');
+                transactionsList.innerHTML = "";
+                recentTransactions.forEach(transaction => {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = `[$${transaction.amount.toFixed(2)}] - ${categoryMapping[transaction.categoryId] || "Unknown"} - ${new Date(transaction.dateIncurred).toLocaleDateString()}`;
+                    transactionsList.appendChild(listItem);
+                });
+
+                // Calculate expenses by category for chart
+                const categoryTotals = expenses.reduce((totals, expense) => {
+                    if (!totals[expense.categoryId]) {
+                        totals[expense.categoryId] = 0;
+                    }
+                    totals[expense.categoryId] += expense.amount;
+                    return totals;
+                }, {});
+
+                // Initialize the chart
+                var ctx = document.getElementById('expenseChart').getContext('2d');
+                var myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(categoryMapping).map(key => categoryMapping[key]),
+                        datasets: [{
+                            label: 'Expenses by Category',
+                            data: Object.keys(categoryMapping).map(key => categoryTotals[key] || 0),
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
             });
+    }
 
-            // Initialize the chart (if you wish to do so)
-            // ... your chart initialization code here ...
+    // Check if Chart.js is loaded, if not, retry after 500ms
+    function checkChartLibraryLoaded() {
+        if (typeof Chart !== 'undefined') {
+            loadDashboard();
+        } else {
+            setTimeout(checkChartLibraryLoaded, 500);
+        }
+    }
 
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        });
+    checkChartLibraryLoaded();
 </script>
+

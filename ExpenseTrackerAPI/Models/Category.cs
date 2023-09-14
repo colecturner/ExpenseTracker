@@ -10,7 +10,6 @@ namespace ExpenseTrackerAPI.Models
         [StringLength(255)]
         public string? CategoryName { get; set; }
 
-        // Navigation property
         public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
     }
 }
