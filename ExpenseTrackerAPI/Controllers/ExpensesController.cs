@@ -86,14 +86,19 @@ namespace ExpenseTrackerAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense expense)
         {
-          if (_context.Expenses == null)
-          {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (_context.Expenses == null)
+            {
               return Problem("Entity set 'ApplicationDbContext.Expenses'  is null.");
-          }
+            }
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetExpense", new { id = expense.ExpenseId }, expense);
+            return CreatedAtAction("GetExpense", new { id = expense.ExpenseId });
         }
 
         // DELETE: api/Expenses/5
@@ -120,5 +125,13 @@ namespace ExpenseTrackerAPI.Controllers
         {
             return (_context.Expenses?.Any(e => e.ExpenseId == id)).GetValueOrDefault();
         }
+
+        [HttpGet("ForUser")]
+        public IActionResult GetExpensesForUser(string userId)
+        {
+            var expenses = _context.Expenses.Where(e => e.UserId == userId).ToList();
+            return Ok(expenses);
+        }
+
     }
 }

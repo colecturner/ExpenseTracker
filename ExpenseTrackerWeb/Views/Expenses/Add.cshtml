@@ -1,38 +1,35 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@using System.Security.Claims
+
 
 <h2>Add New Expense</h2>
-    <form id="addExpenseForm" method="post">
-        <div class="form-group">
-            <label for="amount">Amount:</label>
-            <input type="number" step="0.01" id="amount" name="amount" class="form-control" required />
-        </div>
+<form id="addExpenseForm" method="post">
+    <div class="form-group">
+        <label for="amount">Amount:</label>
+        <input type="number" step="0.01" id="amount" name="amount" class="form-control" required />
+    </div>
 
-        <div class="form-group">
-            <label for="category">Category:</label>
-            <select id="category" name="category" class="form-control">
-                <option value="1">Food</option>
-                <option value="2">Entertainment</option>
-                <option value="3">Travel</option>
-                <!-- add more if i want -->
-            </select>
-        </div>
+    <div class="form-group">
+        <label for="category">Category:</label>
+        <select id="category" name="category" class="form-control">
+            <option value="1">Food</option>
+            <option value="2">Entertainment</option>
+            <option value="3">Travel</option>
+            <!-- add more if i want -->
+        </select>
+    </div>
 
-        <div class="form-group">
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date" class="form-control" required />
-        </div>
+    <div class="form-group">
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" class="form-control" required />
+    </div>
 
-        <div class="form-group">
-            <label for="description">Description (optional):</label>
-            <textarea id="description" name="description" class="form-control"></textarea>
-        </div>
+    <div class="form-group">
+        <label for="description">Description (optional):</label>
+        <textarea id="description" name="description" class="form-control"></textarea>
+    </div>
 
-        <button type="submit" class="btn btn-primary">Add Expense</button>
-    </form>
+    <button type="submit" class="btn btn-primary">Add Expense</button>
+</form>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -40,13 +37,15 @@
         $(document).ready(function () {
             $("#addExpenseForm").submit(function (event) {
                 event.preventDefault();
-
+                let authToken = sessionStorage.getItem("authToken").split(".")[1]
+                console.log(authToken)
+                let userId = JSON.parse(atob(authToken)).nameid
                 var formData = {
+                    "UserId": userId,
                     "Amount": parseFloat($("#amount").val()),
                     "CategoryId": parseInt($("#category").val(), 10),
                     "DateIncurred": $("#date").val(),
                     "Description": $("#description").val()
-                    // TODO: Add the UserId if needed
                 };
 
                 $.ajax({
@@ -56,15 +55,27 @@
                     contentType: 'application/json',
                     success: function (response) {
                         alert("Expense added successfully!");
-                        // TODO: You can redirect to another page or reset the form if you wish
                         $("#addExpenseForm")[0].reset();
                     },
                     error: function (error) {
-                        var errorMessage = error.responseText || "An unknown error occurred.";
+                        var errorData = JSON.parse(error.responseText);
+                        var errorMessage = errorData.title || "An unknown error occurred.";
+
+                        // Check for the 'errors' object in the response and construct a detailed message
+                        if (errorData.errors) {
+                            var detailedErrors = [];
+                            for (var key in errorData.errors) {
+                                detailedErrors.push(key + ": " + errorData.errors[key].join(", "));
+                            }
+                            errorMessage += "\n" + detailedErrors.join("\n");
+                        }
+
                         alert("Error: " + errorMessage);
                     }
+
                 });
             });
         });
+
     </script>
 }
